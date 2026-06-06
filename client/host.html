@@ -16,9 +16,36 @@
         font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       }
       main {
-        max-width: 720px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 48px 24px;
+        text-align: center;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 32px;
+        align-items: start;
+        text-align: left;
+      }
+      @media (max-width: 900px) {
+        .stage {
+          grid-template-columns: 1fr;
+        }
+      }
+      .board-card {
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      #board-canvas {
+        display: block;
+        width: 100%;
+        height: 520px;
+        border-radius: 10px;
+      }
+      .lobby {
         text-align: center;
       }
       h1 {
@@ -106,23 +133,31 @@
       <h1>snake3d</h1>
       <p class="subtitle">Host lobby — scan to join from your phone</p>
 
-      <div class="code-card">
-        <p class="code-label">Room code</p>
-        <p id="room-code">····</p>
+      <div class="stage">
+        <div class="board-card">
+          <canvas id="board-canvas"></canvas>
+        </div>
+
+        <div class="lobby">
+          <div class="code-card">
+            <p class="code-label">Room code</p>
+            <p id="room-code">····</p>
+          </div>
+
+          <div id="qr-wrap">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+          <div id="join-url"></div>
+
+          <section class="players">
+            <h2>Players (<span id="player-count">0</span>)</h2>
+            <ul id="player-list"></ul>
+            <p id="player-empty">No players yet. Waiting for someone to join…</p>
+          </section>
+
+          <p id="status">Connecting…</p>
+        </div>
       </div>
-
-      <div id="qr-wrap">
-        <canvas id="qr-canvas"></canvas>
-      </div>
-      <div id="join-url"></div>
-
-      <section class="players">
-        <h2>Players (<span id="player-count">0</span>)</h2>
-        <ul id="player-list"></ul>
-        <p id="player-empty">No players yet. Waiting for someone to join…</p>
-      </section>
-
-      <p id="status">Connecting…</p>
     </main>
     <script type="module" src="/src/host.ts"></script>
   </body>
