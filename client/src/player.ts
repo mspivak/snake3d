@@ -11,6 +11,7 @@ import {
   type ServerMessage
 } from "@snake3d/shared";
 import { mountJoystick, type JoystickHandle } from "./joystick.ts";
+import { createPovRenderer, type PovRenderer } from "./pov.ts";
 
 const SERVER_URL = import.meta.env["VITE_SERVER_URL"] ?? "ws://localhost:3001";
 
@@ -23,10 +24,20 @@ const joinButton = document.querySelector<HTMLButtonElement>("#join-button")!;
 const errorEl = document.querySelector<HTMLElement>("#join-error")!;
 const waitingRoom = document.querySelector<HTMLElement>("#waiting-room")!;
 const joystickView = document.querySelector<HTMLElement>("#joystick-view")!;
+const povView = document.querySelector<HTMLElement>("#pov-view")!;
 
 let state: JoinState = initialJoinState;
 let socket: WebSocket | undefined;
 let joystick: JoystickHandle | undefined;
+let povReady: Promise<PovRenderer> | undefined;
+
+function startPov(): void {
+  if (povReady !== undefined) {
+    return;
+  }
+  povView.classList.remove("hidden");
+  povReady = createPovRenderer(povView);
+}
 
 function dispatch(action: JoinAction): void {
   state = joinReducer(state, action);
@@ -45,6 +56,7 @@ function render(): void {
 
   if (state.status === "waiting") {
     waitingRoom.textContent = state.roomCode;
+    startPov();
   }
 
   joystickView.classList.toggle("hidden", !waiting);
@@ -81,6 +93,12 @@ function openConnection(roomCode: string, playerName: string): void {
         message: message.payload.message
       });
       ws.close();
+    } else if (message.type === "game-state") {
+      const youPlayerId = message.payload.youPlayerId;
+      startPov();
+      povReady?.then((renderer) => {
+        renderer.update(message.payload.state, youPlayerId);
+      });
     }
   });
 
