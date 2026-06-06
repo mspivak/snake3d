@@ -222,3 +222,43 @@ export function parseMessage<T extends MessageEnvelope<string, unknown>>(raw: st
 export function serializeMessage(message: MessageEnvelope<string, unknown>): string {
   return JSON.stringify(message);
 }
+
+export interface LobbyPlayer {
+  playerId: string;
+  playerName: string;
+}
+
+export function buildJoinUrl(origin: string, roomCode: string): string {
+  const base = origin.replace(/\/+$/, "");
+  return `${base}/player.html?room=${encodeURIComponent(roomCode)}`;
+}
+
+export function addLobbyPlayer(
+  players: readonly LobbyPlayer[],
+  playerId: string,
+  playerName: string
+): LobbyPlayer[] {
+  const without = players.filter((player) => player.playerId !== playerId);
+  return [...without, { playerId, playerName }];
+}
+
+export function removeLobbyPlayer(
+  players: readonly LobbyPlayer[],
+  playerId: string
+): LobbyPlayer[] {
+  return players.filter((player) => player.playerId !== playerId);
+}
+
+export function reduceLobbyPlayers(
+  players: readonly LobbyPlayer[],
+  message: PlayerJoinedMessage | PlayerLeftMessage
+): LobbyPlayer[] {
+  if (message.type === "player-joined") {
+    return addLobbyPlayer(
+      players,
+      message.payload.playerId,
+      message.payload.playerName
+    );
+  }
+  return removeLobbyPlayer(players, message.payload.playerId);
+}

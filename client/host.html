@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snake3d host lobby</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: #0b0e14;
+        color: #e6edf3;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 48px 24px;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        margin: 0 0 8px;
+      }
+      .subtitle {
+        color: #9aa7b4;
+        margin: 0 0 32px;
+      }
+      .code-card {
+        display: inline-block;
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 24px 36px;
+        margin-bottom: 28px;
+      }
+      .code-label {
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        color: #6f7d8c;
+        margin: 0 0 8px;
+      }
+      #room-code {
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: 0.4rem;
+        font-variant-numeric: tabular-nums;
+        margin: 0;
+      }
+      #qr-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
+      }
+      #qr-canvas {
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      #join-url {
+        color: #58a6ff;
+        word-break: break-all;
+        font-size: 0.85rem;
+      }
+      .players {
+        margin-top: 40px;
+        text-align: left;
+      }
+      .players h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        border-bottom: 1px solid #232a36;
+        padding-bottom: 8px;
+      }
+      #player-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #player-list li {
+        padding: 12px 14px;
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 10px;
+        margin-bottom: 8px;
+      }
+      #player-empty {
+        color: #6f7d8c;
+        font-style: italic;
+      }
+      #status {
+        margin-top: 16px;
+        font-size: 0.8rem;
+        color: #6f7d8c;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>snake3d</h1>
+      <p class="subtitle">Host lobby — scan to join from your phone</p>
+
+      <div class="code-card">
+        <p class="code-label">Room code</p>
+        <p id="room-code">····</p>
+      </div>
+
+      <div id="qr-wrap">
+        <canvas id="qr-canvas"></canvas>
+      </div>
+      <div id="join-url"></div>
+
+      <section class="players">
+        <h2>Players (<span id="player-count">0</span>)</h2>
+        <ul id="player-list"></ul>
+        <p id="player-empty">No players yet. Waiting for someone to join…</p>
+      </section>
+
+      <p id="status">Connecting…</p>
+    </main>
+    <script type="module" src="/src/host.ts"></script>
+  </body>
+</html>
