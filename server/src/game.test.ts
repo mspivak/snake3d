@@ -156,7 +156,7 @@ test("eating food grows the snake and spawns new food in a free cell", () => {
   assert.equal(occupied.has(`${next.food[0].x},${next.food[0].y},${next.food[0].z}`), false);
 });
 
-test("moving into a wall kills the snake", () => {
+test("moving past an edge wraps to the opposite side without dying", () => {
   const state: GameState = {
     tick: 0,
     bounds: { size: 12 },
@@ -173,8 +173,8 @@ test("moving into a wall kills the snake", () => {
 
   const next = step(state, {}, makeSeededRng(1));
   const snake = snakeOf(next, "a");
-  assert.equal(snake.status, "dead");
-  assert.deepEqual(snake.cells[0], { x: 11, y: 5, z: 5 });
+  assert.equal(snake.status, "alive");
+  assert.deepEqual(snake.cells[0], { x: 0, y: 5, z: 5 });
 });
 
 test("a dead snake does not advance on subsequent ticks", () => {

@@ -99,7 +99,7 @@ export function tickRoomGame(room: RoomGame): void {
   broadcastGameState(room.state, room.members, room.phase);
 }
 
-export function startGameLoop(room: RoomGame, ticksPerSecond = 7): () => void {
+export function startGameLoop(room: RoomGame, ticksPerSecond = 4): () => void {
   const interval = setInterval(() => {
     tickRoomGame(room);
     if (room.phase === "over") {

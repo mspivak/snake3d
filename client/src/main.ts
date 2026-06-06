@@ -87,7 +87,7 @@ function renderRoom(roomCode: string): void {
   codeEl.textContent = roomCode;
   const joinUrl = buildJoinUrl(joinOrigin(), roomCode);
   joinUrlEl.textContent = joinUrl;
-  void QRCode.toCanvas(qrCanvas, joinUrl, { width: 240, margin: 1 });
+  void QRCode.toCanvas(qrCanvas, joinUrl, { width: 150, margin: 1 });
 }
 
 function handleMessage(message: ServerMessage): void {

@@ -118,10 +118,30 @@ test("startRound resets a finished round from the current roster", () => {
 
 test("tick sets phase to over when the round ends", () => {
   const room = createRoomGame();
-  startRound(room, ["solo"], 1, 2);
-  for (let i = 0; i < 20 && room.phase === "playing"; i += 1) {
-    tickRoomGame(room);
-  }
+  startRound(room, ["a", "b"], 1, 8);
+  room.state = {
+    tick: 0,
+    bounds: { size: 8 },
+    snakes: [
+      {
+        playerId: "a",
+        cells: [{ x: 0, y: 0, z: 0 }],
+        direction: { x: 1, y: 0, z: 0 },
+        status: "alive"
+      },
+      {
+        playerId: "b",
+        cells: [
+          { x: 1, y: 0, z: 0 },
+          { x: 2, y: 0, z: 0 }
+        ],
+        direction: { x: 1, y: 0, z: 0 },
+        status: "alive"
+      }
+    ],
+    food: [{ x: 5, y: 5, z: 5 }]
+  };
+  tickRoomGame(room);
   assert.equal(room.phase, "over");
 });
 
