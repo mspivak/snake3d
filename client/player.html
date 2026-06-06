@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>snake3d — join</title>
+    <style>
+      :root {
+        --bg: #0b0e14;
+        --panel: #131826;
+        --accent: #4ade80;
+        --accent-press: #22c55e;
+        --text: #e6edf3;
+        --muted: #8b95a7;
+        --error: #f87171;
+        --border: #232a3a;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+        min-height: 100vh;
+      }
+      main {
+        width: 100%;
+        max-width: 420px;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 4px;
+        letter-spacing: 0.5px;
+      }
+      .tagline {
+        color: var(--muted);
+        margin: 0 0 24px;
+        font-size: 0.95rem;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+      input {
+        width: 100%;
+        font-size: 1.1rem;
+        padding: 14px 14px;
+        margin: 0 0 18px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #0e1320;
+        color: var(--text);
+      }
+      input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      #room-code { text-transform: uppercase; letter-spacing: 0.2em; }
+      button {
+        width: 100%;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #06210f;
+        cursor: pointer;
+      }
+      button:active { background: var(--accent-press); }
+      button:disabled { opacity: 0.55; cursor: default; }
+      .error {
+        color: var(--error);
+        margin: 14px 0 0;
+        font-size: 0.95rem;
+        min-height: 1.2em;
+      }
+      .waiting {
+        text-align: center;
+        padding: 12px 0;
+      }
+      .spinner {
+        width: 56px;
+        height: 56px;
+        margin: 8px auto 20px;
+        border: 5px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .badge {
+        display: inline-block;
+        font-size: 1.4rem;
+        letter-spacing: 0.25em;
+        font-weight: 700;
+        color: var(--accent);
+        margin-top: 4px;
+      }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>snake3d</h1>
+      <p class="tagline">Join the game from your phone.</p>
+
+      <section id="join-view" class="panel">
+        <form id="join-form" novalidate>
+          <label for="room-code">Room code</label>
+          <input
+            id="room-code"
+            name="room-code"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            inputmode="text"
+            placeholder="ABCD"
+          />
+          <label for="player-name">Your name</label>
+          <input
+            id="player-name"
+            name="player-name"
+            autocomplete="off"
+            placeholder="Player"
+          />
+          <button id="join-button" type="submit">Join game</button>
+          <p id="join-error" class="error" role="alert"></p>
+        </form>
+      </section>
+
+      <section id="waiting-view" class="panel waiting hidden">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>You're in! Waiting for the game to start…</p>
+        <p class="tagline">Room <span id="waiting-room" class="badge"></span></p>
+      </section>
+    </main>
+
+    <script type="module" src="/src/player.ts"></script>
+  </body>
+</html>
