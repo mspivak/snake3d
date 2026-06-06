@@ -10,6 +10,7 @@ import {
   type JoinAction,
   type ServerMessage
 } from "@snake3d/shared";
+import { mountJoystick, type JoystickHandle } from "./joystick.ts";
 
 const SERVER_URL = import.meta.env["VITE_SERVER_URL"] ?? "ws://localhost:3001";
 
@@ -21,9 +22,11 @@ const nameInput = document.querySelector<HTMLInputElement>("#player-name")!;
 const joinButton = document.querySelector<HTMLButtonElement>("#join-button")!;
 const errorEl = document.querySelector<HTMLElement>("#join-error")!;
 const waitingRoom = document.querySelector<HTMLElement>("#waiting-room")!;
+const joystickView = document.querySelector<HTMLElement>("#joystick-view")!;
 
 let state: JoinState = initialJoinState;
 let socket: WebSocket | undefined;
+let joystick: JoystickHandle | undefined;
 
 function dispatch(action: JoinAction): void {
   state = joinReducer(state, action);
@@ -42,6 +45,14 @@ function render(): void {
 
   if (state.status === "waiting") {
     waitingRoom.textContent = state.roomCode;
+  }
+
+  joystickView.classList.toggle("hidden", !waiting);
+  if (waiting && joystick === undefined && socket !== undefined) {
+    joystick = mountJoystick(joystickView, socket);
+  } else if (!waiting && joystick !== undefined) {
+    joystick.destroy();
+    joystick = undefined;
   }
 }
 

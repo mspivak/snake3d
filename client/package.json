@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "test": "node --test --experimental-strip-types src/board.test.ts"
+    "test": "node --test --experimental-strip-types src/*.test.ts"
   },
   "dependencies": {
     "@snake3d/shared": "*",
