@@ -126,6 +126,46 @@
         font-size: 0.8rem;
         color: #6f7d8c;
       }
+      #lifecycle {
+        margin-top: 28px;
+      }
+      #start-button,
+      #restart-button {
+        font-size: 1.05rem;
+        font-weight: 600;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        background: #4ade80;
+        color: #06210f;
+        cursor: pointer;
+      }
+      #start-button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      #start-button.hidden,
+      #gameover-card.hidden {
+        display: none;
+      }
+      #gameover-card {
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 20px 24px;
+        text-align: center;
+      }
+      .gameover-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+        color: #f87171;
+      }
+      #gameover-detail {
+        color: #9aa7b4;
+        margin: 0 0 16px;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
@@ -154,6 +194,15 @@
             <ul id="player-list"></ul>
             <p id="player-empty">No players yet. Waiting for someone to join…</p>
           </section>
+
+          <div id="lifecycle">
+            <button id="start-button" type="button" disabled>Start game</button>
+            <div id="gameover-card" class="hidden">
+              <p class="gameover-title">Game over</p>
+              <p id="gameover-detail"></p>
+              <button id="restart-button" type="button">Play again</button>
+            </div>
+          </div>
 
           <p id="status">Connecting…</p>
         </div>

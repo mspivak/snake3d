@@ -6,6 +6,8 @@ import {
   parseRoomCodeFromQuery,
   joinReducer,
   initialJoinState,
+  type GamePhase,
+  type GameState,
   type JoinState,
   type JoinAction,
   type ServerMessage
@@ -25,6 +27,7 @@ const errorEl = document.querySelector<HTMLElement>("#join-error")!;
 const waitingRoom = document.querySelector<HTMLElement>("#waiting-room")!;
 const joystickView = document.querySelector<HTMLElement>("#joystick-view")!;
 const povView = document.querySelector<HTMLElement>("#pov-view")!;
+const statusBanner = document.querySelector<HTMLElement>("#status-banner")!;
 
 let state: JoinState = initialJoinState;
 let socket: WebSocket | undefined;
@@ -37,6 +40,44 @@ function startPov(): void {
   }
   povView.classList.remove("hidden");
   povReady = createPovRenderer(povView);
+}
+
+let dead = false;
+
+function setBanner(text: string): void {
+  statusBanner.textContent = text;
+  statusBanner.classList.toggle("hidden", text === "");
+}
+
+function applyLifeStatus(
+  gameState: GameState,
+  youPlayerId: string | undefined,
+  phase: GamePhase
+): void {
+  const snake =
+    youPlayerId === undefined
+      ? undefined
+      : gameState.snakes.find((s) => s.playerId === youPlayerId);
+  const isDead = snake !== undefined && snake.status === "dead";
+
+  if (phase === "over") {
+    setBanner(isDead ? "You died — game over" : "Game over");
+  } else if (isDead) {
+    setBanner("You died — spectating");
+  } else {
+    setBanner("");
+  }
+
+  const shouldDisable = isDead || phase === "over";
+  if (shouldDisable !== dead) {
+    dead = shouldDisable;
+    if (dead) {
+      joystick?.destroy();
+      joystick = undefined;
+    } else if (state.status === "waiting" && socket !== undefined) {
+      joystick = mountJoystick(joystickView, socket);
+    }
+  }
 }
 
 function dispatch(action: JoinAction): void {
@@ -59,10 +100,10 @@ function render(): void {
     startPov();
   }
 
-  joystickView.classList.toggle("hidden", !waiting);
-  if (waiting && joystick === undefined && socket !== undefined) {
+  joystickView.classList.toggle("hidden", !waiting || dead);
+  if (waiting && !dead && joystick === undefined && socket !== undefined) {
     joystick = mountJoystick(joystickView, socket);
-  } else if (!waiting && joystick !== undefined) {
+  } else if ((!waiting || dead) && joystick !== undefined) {
     joystick.destroy();
     joystick = undefined;
   }
@@ -99,6 +140,7 @@ function openConnection(roomCode: string, playerName: string): void {
       povReady?.then((renderer) => {
         renderer.update(message.payload.state, youPlayerId);
       });
+      applyLifeStatus(message.payload.state, youPlayerId, message.payload.phase);
     }
   });
 

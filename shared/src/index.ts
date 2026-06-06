@@ -1,6 +1,11 @@
 export const PROTOCOL_VERSION = 1;
 
-export type ClientMessageType = "hello" | "create-room" | "join-room" | "direction-input";
+export type ClientMessageType =
+  | "hello"
+  | "create-room"
+  | "join-room"
+  | "direction-input"
+  | "start-game";
 export type ServerMessageType =
   | "welcome"
   | "room-created"
@@ -50,6 +55,10 @@ export interface DirectionInputPayload {
   direction: Direction;
 }
 
+export interface StartGamePayload {
+  roomCode: string;
+}
+
 export interface JoinErrorPayload {
   roomCode: string;
   code: JoinErrorCode;
@@ -67,15 +76,19 @@ export interface PlayerLeftPayload {
   playerId: string;
 }
 
+export type GamePhase = "lobby" | "playing" | "over";
+
 export interface GameStatePayload {
   state: GameState;
   youPlayerId?: string;
+  phase: GamePhase;
 }
 
 export type HelloMessage = MessageEnvelope<"hello", HelloPayload>;
 export type CreateRoomMessage = MessageEnvelope<"create-room", CreateRoomPayload>;
 export type JoinRoomMessage = MessageEnvelope<"join-room", JoinRoomPayload>;
 export type DirectionInputMessage = MessageEnvelope<"direction-input", DirectionInputPayload>;
+export type StartGameMessage = MessageEnvelope<"start-game", StartGamePayload>;
 
 export type WelcomeMessage = MessageEnvelope<"welcome", WelcomePayload>;
 export type RoomCreatedMessage = MessageEnvelope<"room-created", RoomCreatedPayload>;
@@ -89,7 +102,8 @@ export type ClientMessage =
   | HelloMessage
   | CreateRoomMessage
   | JoinRoomMessage
-  | DirectionInputMessage;
+  | DirectionInputMessage
+  | StartGameMessage;
 export type ServerMessage =
   | WelcomeMessage
   | RoomCreatedMessage
@@ -147,6 +161,14 @@ export function createDirectionInput(direction: Direction): DirectionInputMessag
   };
 }
 
+export function createStartGame(roomCode: string): StartGameMessage {
+  return {
+    type: "start-game",
+    protocolVersion: PROTOCOL_VERSION,
+    payload: { roomCode }
+  };
+}
+
 export function createJoined(roomCode: string, playerId: string): JoinedMessage {
   return {
     type: "joined",
@@ -189,10 +211,11 @@ export function createPlayerLeft(roomCode: string, playerId: string): PlayerLeft
 
 export function createGameStateMessage(
   state: GameState,
-  youPlayerId?: string
+  youPlayerId?: string,
+  phase: GamePhase = "playing"
 ): GameStateMessage {
   const payload: GameStatePayload =
-    youPlayerId === undefined ? { state } : { state, youPlayerId };
+    youPlayerId === undefined ? { state, phase } : { state, youPlayerId, phase };
   return {
     type: "game-state",
     protocolVersion: PROTOCOL_VERSION,
