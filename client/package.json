@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@snake3d/shared": "*",
+    "qrcode": "^1.5.4",
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
     "@types/three": "^0.184.0",
     "typescript": "^5.7.3",
     "vite": "^6.0.3"

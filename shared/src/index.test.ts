@@ -13,8 +13,13 @@ import {
   createPlayerLeft,
   parseMessage,
   serializeMessage,
+  buildJoinUrl,
+  addLobbyPlayer,
+  removeLobbyPlayer,
+  reduceLobbyPlayers,
   type ClientMessage,
-  type ServerMessage
+  type ServerMessage,
+  type LobbyPlayer
 } from "./index.ts";
 
 test("createHello builds a versioned hello envelope", () => {
@@ -105,4 +110,59 @@ test("serialize then parse round-trips a room-created message", () => {
   const original = createRoomCreated("WXYZ", "host-9");
   const parsed = parseMessage<ServerMessage>(serializeMessage(original));
   assert.deepEqual(parsed, original);
+});
+
+test("buildJoinUrl builds a player join url from origin and code", () => {
+  assert.equal(
+    buildJoinUrl("http://localhost:5173", "ABCD"),
+    "http://localhost:5173/player.html?room=ABCD"
+  );
+});
+
+test("buildJoinUrl trims a trailing slash from origin", () => {
+  assert.equal(
+    buildJoinUrl("https://snake3d.example/", "WXYZ"),
+    "https://snake3d.example/player.html?room=WXYZ"
+  );
+});
+
+test("buildJoinUrl encodes the room code", () => {
+  assert.equal(
+    buildJoinUrl("https://x.test", "A B&C"),
+    "https://x.test/player.html?room=A%20B%26C"
+  );
+});
+
+test("addLobbyPlayer appends a new player immutably", () => {
+  const start: LobbyPlayer[] = [];
+  const next = addLobbyPlayer(start, "p1", "alice");
+  assert.deepEqual(next, [{ playerId: "p1", playerName: "alice" }]);
+  assert.deepEqual(start, []);
+});
+
+test("addLobbyPlayer replaces an existing player with the same id", () => {
+  const start: LobbyPlayer[] = [{ playerId: "p1", playerName: "alice" }];
+  const next = addLobbyPlayer(start, "p1", "alice2");
+  assert.deepEqual(next, [{ playerId: "p1", playerName: "alice2" }]);
+});
+
+test("removeLobbyPlayer drops the matching player", () => {
+  const start: LobbyPlayer[] = [
+    { playerId: "p1", playerName: "alice" },
+    { playerId: "p2", playerName: "bob" }
+  ];
+  const next = removeLobbyPlayer(start, "p1");
+  assert.deepEqual(next, [{ playerId: "p2", playerName: "bob" }]);
+});
+
+test("reduceLobbyPlayers applies join then leave events", () => {
+  let players: LobbyPlayer[] = [];
+  players = reduceLobbyPlayers(players, createPlayerJoined("ABCD", "p1", "alice"));
+  players = reduceLobbyPlayers(players, createPlayerJoined("ABCD", "p2", "bob"));
+  assert.deepEqual(players, [
+    { playerId: "p1", playerName: "alice" },
+    { playerId: "p2", playerName: "bob" }
+  ]);
+  players = reduceLobbyPlayers(players, createPlayerLeft("ABCD", "p1"));
+  assert.deepEqual(players, [{ playerId: "p2", playerName: "bob" }]);
 });
