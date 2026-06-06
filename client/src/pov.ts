@@ -30,10 +30,19 @@ function normalizeDirection(direction: Direction): Vec3 {
   };
 }
 
-export function computeHeadCamera(head: Cell, direction: Direction): HeadCamera {
+export function computeHeadCamera(
+  head: Cell,
+  direction: Direction,
+  back = 0,
+  up = 0
+): HeadCamera {
   const forward = normalizeDirection(direction);
   return {
-    cameraPosition: { x: head.x, y: head.y, z: head.z },
+    cameraPosition: {
+      x: head.x - forward.x * back,
+      y: head.y - forward.y * back + up,
+      z: head.z - forward.z * back
+    },
     lookAtTarget: {
       x: head.x + forward.x,
       y: head.y + forward.y,
@@ -99,11 +108,16 @@ export async function createPovRenderer(
     boundsGroup.clear();
     const geometry = new THREE.BoxGeometry(size, size, size);
     const edges = new THREE.EdgesGeometry(geometry);
-    const material = new THREE.LineBasicMaterial({ color: 0x3b82f6 });
+    const material = new THREE.LineBasicMaterial({ color: 0x7dd3fc });
     const wireframe = new THREE.LineSegments(edges, material);
     const half = size / 2 - 0.5;
     wireframe.position.set(half, half, half);
     boundsGroup.add(wireframe);
+
+    const grid = new THREE.GridHelper(size, size, 0x38507a, 0x21314f);
+    grid.position.set(half, -0.5, half);
+    boundsGroup.add(grid);
+
     currentBoundsSize = size;
   }
 
@@ -138,7 +152,9 @@ export async function createPovRenderer(
     const head = snake.cells[0] ?? { x: 0, y: 0, z: 0 };
     const { cameraPosition, lookAtTarget } = computeHeadCamera(
       head,
-      snake.direction
+      snake.direction,
+      3,
+      1.4
     );
     camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
     camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);

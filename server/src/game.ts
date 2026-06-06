@@ -10,7 +10,7 @@ export type Rng = () => number;
 
 export type DirectionInputs = Record<string, Direction>;
 
-const DEFAULT_GRID_SIZE = 12;
+const DEFAULT_GRID_SIZE = 20;
 
 export function makeSeededRng(seed: number): Rng {
   let state = seed >>> 0;
@@ -34,15 +34,12 @@ function addVec(a: Vec3, b: Vec3): Vec3 {
   return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
 }
 
-function isOutOfBounds(cell: Vec3, size: number): boolean {
-  return (
-    cell.x < 0 ||
-    cell.y < 0 ||
-    cell.z < 0 ||
-    cell.x >= size ||
-    cell.y >= size ||
-    cell.z >= size
-  );
+function wrap(cell: Vec3, size: number): Vec3 {
+  return {
+    x: ((cell.x % size) + size) % size,
+    y: ((cell.y % size) + size) % size,
+    z: ((cell.z % size) + size) % size
+  };
 }
 
 function occupiedCells(snakes: Snake[]): Set<string> {
@@ -164,7 +161,7 @@ export function step(
     if (snake.status !== "alive") {
       continue;
     }
-    const head = addVec(snake.cells[0], snake.direction);
+    const head = wrap(addVec(snake.cells[0], snake.direction), state.bounds.size);
     heads.set(snake.playerId, head);
     const foodIndex = food.findIndex((f) => f.x === head.x && f.y === head.y && f.z === head.z);
     if (foodIndex !== -1) {
@@ -177,14 +174,6 @@ export function step(
       return { ...snake, cells: snake.cells.map((c) => ({ ...c })) };
     }
     const head = heads.get(snake.playerId)!;
-
-    if (isOutOfBounds(head, state.bounds.size)) {
-      return {
-        ...snake,
-        status: "dead",
-        cells: snake.cells.map((c) => ({ ...c }))
-      };
-    }
 
     const grows = eaten.has(snake.playerId);
     const tailKey = grows ? null : key(snake.cells[snake.cells.length - 1]);
