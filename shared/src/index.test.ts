@@ -4,6 +4,13 @@ import {
   PROTOCOL_VERSION,
   createHello,
   createWelcome,
+  createCreateRoom,
+  createRoomCreated,
+  createJoinRoom,
+  createJoined,
+  createJoinError,
+  createPlayerJoined,
+  createPlayerLeft,
   parseMessage,
   serializeMessage,
   type ClientMessage,
@@ -47,4 +54,55 @@ test("parseMessage rejects an unsupported protocol version", () => {
 test("parseMessage rejects a message without a type", () => {
   const raw = JSON.stringify({ protocolVersion: PROTOCOL_VERSION, payload: {} });
   assert.throws(() => parseMessage(raw), /missing a string type/);
+});
+
+test("createCreateRoom builds a versioned create-room envelope", () => {
+  const msg = createCreateRoom("desktop");
+  assert.equal(msg.type, "create-room");
+  assert.equal(msg.protocolVersion, PROTOCOL_VERSION);
+  assert.equal(msg.payload.hostName, "desktop");
+});
+
+test("createRoomCreated builds a versioned room-created envelope", () => {
+  const msg = createRoomCreated("ABCD", "host-1");
+  assert.equal(msg.type, "room-created");
+  assert.equal(msg.payload.roomCode, "ABCD");
+  assert.equal(msg.payload.hostId, "host-1");
+});
+
+test("createJoinRoom builds a versioned join-room envelope", () => {
+  const msg = createJoinRoom("ABCD", "phone");
+  assert.equal(msg.type, "join-room");
+  assert.equal(msg.payload.roomCode, "ABCD");
+  assert.equal(msg.payload.playerName, "phone");
+});
+
+test("createJoined builds a versioned joined envelope", () => {
+  const msg = createJoined("ABCD", "player-1");
+  assert.equal(msg.type, "joined");
+  assert.equal(msg.payload.roomCode, "ABCD");
+  assert.equal(msg.payload.playerId, "player-1");
+});
+
+test("createJoinError carries a typed error code", () => {
+  const msg = createJoinError("ZZZZ", "unknown-room", "No such room");
+  assert.equal(msg.type, "join-error");
+  assert.equal(msg.payload.code, "unknown-room");
+  assert.equal(msg.payload.message, "No such room");
+});
+
+test("createPlayerJoined and createPlayerLeft build host notifications", () => {
+  const joined = createPlayerJoined("ABCD", "player-1", "phone");
+  assert.equal(joined.type, "player-joined");
+  assert.equal(joined.payload.playerName, "phone");
+
+  const left = createPlayerLeft("ABCD", "player-1");
+  assert.equal(left.type, "player-left");
+  assert.equal(left.payload.playerId, "player-1");
+});
+
+test("serialize then parse round-trips a room-created message", () => {
+  const original = createRoomCreated("WXYZ", "host-9");
+  const parsed = parseMessage<ServerMessage>(serializeMessage(original));
+  assert.deepEqual(parsed, original);
 });
