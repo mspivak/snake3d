@@ -15,6 +15,21 @@ import { createBoardScene } from "./board.ts";
 const SERVER_URL = import.meta.env["VITE_SERVER_URL"] ?? "ws://localhost:3001";
 const HOST_NAME = "host-lobby";
 
+const SERVER_HOSTNAME = new URL(SERVER_URL).hostname;
+
+function joinOrigin(): string {
+  const override = import.meta.env["VITE_PUBLIC_ORIGIN"];
+  if (override !== undefined && override !== "") {
+    return override;
+  }
+  const pageHost = window.location.hostname;
+  if (pageHost !== "localhost" && pageHost !== "127.0.0.1") {
+    return window.location.origin;
+  }
+  const port = window.location.port === "" ? "" : `:${window.location.port}`;
+  return `${window.location.protocol}//${SERVER_HOSTNAME}${port}`;
+}
+
 const codeEl = document.getElementById("room-code") as HTMLElement;
 const qrCanvas = document.getElementById("qr-canvas") as HTMLCanvasElement;
 const joinUrlEl = document.getElementById("join-url") as HTMLElement;
@@ -70,7 +85,7 @@ function renderPlayers(): void {
 
 function renderRoom(roomCode: string): void {
   codeEl.textContent = roomCode;
-  const joinUrl = buildJoinUrl(window.location.origin, roomCode);
+  const joinUrl = buildJoinUrl(joinOrigin(), roomCode);
   joinUrlEl.textContent = joinUrl;
   void QRCode.toCanvas(qrCanvas, joinUrl, { width: 240, margin: 1 });
 }
