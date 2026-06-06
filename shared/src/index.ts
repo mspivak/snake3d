@@ -7,7 +7,8 @@ export type ServerMessageType =
   | "joined"
   | "join-error"
   | "player-joined"
-  | "player-left";
+  | "player-left"
+  | "game-state";
 
 export type JoinErrorCode = "unknown-room" | "room-full";
 
@@ -62,6 +63,11 @@ export interface PlayerLeftPayload {
   playerId: string;
 }
 
+export interface GameStatePayload {
+  state: GameState;
+  youPlayerId?: string;
+}
+
 export type HelloMessage = MessageEnvelope<"hello", HelloPayload>;
 export type CreateRoomMessage = MessageEnvelope<"create-room", CreateRoomPayload>;
 export type JoinRoomMessage = MessageEnvelope<"join-room", JoinRoomPayload>;
@@ -72,6 +78,7 @@ export type JoinedMessage = MessageEnvelope<"joined", JoinedPayload>;
 export type JoinErrorMessage = MessageEnvelope<"join-error", JoinErrorPayload>;
 export type PlayerJoinedMessage = MessageEnvelope<"player-joined", PlayerJoinedPayload>;
 export type PlayerLeftMessage = MessageEnvelope<"player-left", PlayerLeftPayload>;
+export type GameStateMessage = MessageEnvelope<"game-state", GameStatePayload>;
 
 export type ClientMessage = HelloMessage | CreateRoomMessage | JoinRoomMessage;
 export type ServerMessage =
@@ -80,7 +87,8 @@ export type ServerMessage =
   | JoinedMessage
   | JoinErrorMessage
   | PlayerJoinedMessage
-  | PlayerLeftMessage;
+  | PlayerLeftMessage
+  | GameStateMessage;
 
 export function createHello(clientName: string): HelloMessage {
   return {
@@ -159,6 +167,19 @@ export function createPlayerLeft(roomCode: string, playerId: string): PlayerLeft
     type: "player-left",
     protocolVersion: PROTOCOL_VERSION,
     payload: { roomCode, playerId }
+  };
+}
+
+export function createGameStateMessage(
+  state: GameState,
+  youPlayerId?: string
+): GameStateMessage {
+  const payload: GameStatePayload =
+    youPlayerId === undefined ? { state } : { state, youPlayerId };
+  return {
+    type: "game-state",
+    protocolVersion: PROTOCOL_VERSION,
+    payload
   };
 }
 
