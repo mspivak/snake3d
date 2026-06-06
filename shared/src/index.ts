@@ -262,3 +262,11 @@ export function reduceLobbyPlayers(
   }
   return removeLobbyPlayer(players, message.payload.playerId);
 }
+
+export {
+  normalizeRoomCode,
+  parseRoomCodeFromQuery,
+  joinReducer,
+  initialJoinState
+} from "./join.ts";
+export type { JoinState, JoinAction } from "./join.ts";
