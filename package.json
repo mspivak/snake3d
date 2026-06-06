@@ -1,0 +1,23 @@
+{
+  "name": "snake3d",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace shared",
+    "build:server": "npm run build --workspace server",
+    "build:client": "npm run build --workspace client",
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "dev": "npm run build:shared && concurrently -n server,client -c green,cyan \"npm run dev --workspace server\" \"npm run dev --workspace client\"",
+    "test": "npm run test --workspace shared --workspace server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

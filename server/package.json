@@ -1,0 +1,21 @@
+{
+  "name": "@snake3d/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --experimental-strip-types --watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "node --test --experimental-strip-types src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@snake3d/shared": "*",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.3"
+  }
+}
