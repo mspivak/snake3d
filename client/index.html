@@ -5,11 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>snake3d</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #0b0e14; overflow: hidden; }
-      canvas { display: block; }
+      :root {
+        color-scheme: dark;
+      }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: #0b0e14;
+        color: #e6edf3;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 24px;
+        text-align: center;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 32px;
+        align-items: start;
+        text-align: left;
+      }
+      @media (max-width: 900px) {
+        .stage {
+          grid-template-columns: 1fr;
+        }
+      }
+      .board-card {
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      #board-canvas {
+        display: block;
+        width: 100%;
+        height: 520px;
+        border-radius: 10px;
+      }
+      .lobby {
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        margin: 0 0 8px;
+      }
+      .subtitle {
+        color: #9aa7b4;
+        margin: 0 0 32px;
+      }
+      .code-card {
+        display: inline-block;
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 24px 36px;
+        margin-bottom: 28px;
+      }
+      .code-label {
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        color: #6f7d8c;
+        margin: 0 0 8px;
+      }
+      #room-code {
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: 0.4rem;
+        font-variant-numeric: tabular-nums;
+        margin: 0;
+      }
+      #qr-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
+      }
+      #qr-canvas {
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      #join-url {
+        color: #58a6ff;
+        word-break: break-all;
+        font-size: 0.85rem;
+      }
+      .players {
+        margin-top: 40px;
+        text-align: left;
+      }
+      .players h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        border-bottom: 1px solid #232a36;
+        padding-bottom: 8px;
+      }
+      #player-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #player-list li {
+        padding: 12px 14px;
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 10px;
+        margin-bottom: 8px;
+      }
+      #player-empty {
+        color: #6f7d8c;
+        font-style: italic;
+      }
+      #status {
+        margin-top: 16px;
+        font-size: 0.8rem;
+        color: #6f7d8c;
+      }
+      #lifecycle {
+        margin-top: 28px;
+      }
+      #start-button,
+      #restart-button {
+        font-size: 1.05rem;
+        font-weight: 600;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        background: #4ade80;
+        color: #06210f;
+        cursor: pointer;
+      }
+      #start-button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      #start-button.hidden,
+      #gameover-card.hidden {
+        display: none;
+      }
+      #gameover-card {
+        background: #131823;
+        border: 1px solid #232a36;
+        border-radius: 16px;
+        padding: 20px 24px;
+        text-align: center;
+      }
+      .gameover-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+        color: #f87171;
+      }
+      #gameover-detail {
+        color: #9aa7b4;
+        margin: 0 0 16px;
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
+    <main>
+      <h1>snake3d</h1>
+      <p class="subtitle">Host lobby — scan to join from your phone</p>
+
+      <div class="stage">
+        <div class="board-card">
+          <canvas id="board-canvas"></canvas>
+        </div>
+
+        <div class="lobby">
+          <div class="code-card">
+            <p class="code-label">Room code</p>
+            <p id="room-code">····</p>
+          </div>
+
+          <div id="qr-wrap">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+          <div id="join-url"></div>
+
+          <section class="players">
+            <h2>Players (<span id="player-count">0</span>)</h2>
+            <ul id="player-list"></ul>
+            <p id="player-empty">No players yet. Waiting for someone to join…</p>
+          </section>
+
+          <div id="lifecycle">
+            <button id="start-button" type="button" disabled>Start game</button>
+            <div id="gameover-card" class="hidden">
+              <p class="gameover-title">Game over</p>
+              <p id="gameover-detail"></p>
+              <button id="restart-button" type="button">Play again</button>
+            </div>
+          </div>
+
+          <p id="status">Connecting…</p>
+        </div>
+      </div>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
