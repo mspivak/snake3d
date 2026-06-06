@@ -162,6 +162,47 @@ export function createPlayerLeft(roomCode: string, playerId: string): PlayerLeft
   };
 }
 
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export type Cell = Vec3;
+
+export type DirectionName = "+x" | "-x" | "+y" | "-y" | "+z" | "-z";
+
+export type Direction = Vec3;
+
+export const DIRECTIONS: Record<DirectionName, Direction> = {
+  "+x": { x: 1, y: 0, z: 0 },
+  "-x": { x: -1, y: 0, z: 0 },
+  "+y": { x: 0, y: 1, z: 0 },
+  "-y": { x: 0, y: -1, z: 0 },
+  "+z": { x: 0, y: 0, z: 1 },
+  "-z": { x: 0, y: 0, z: -1 }
+};
+
+export type SnakeStatus = "alive" | "dead";
+
+export interface Snake {
+  playerId: string;
+  cells: Cell[];
+  direction: Direction;
+  status: SnakeStatus;
+}
+
+export interface GridBounds {
+  size: number;
+}
+
+export interface GameState {
+  tick: number;
+  bounds: GridBounds;
+  snakes: Snake[];
+  food: Cell[];
+}
+
 export function parseMessage<T extends MessageEnvelope<string, unknown>>(raw: string): T {
   const parsed = JSON.parse(raw) as T;
   if (typeof parsed !== "object" || parsed === null) {
