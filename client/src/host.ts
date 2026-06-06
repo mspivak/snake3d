@@ -8,6 +8,7 @@ import {
   type ServerMessage,
   type LobbyPlayer
 } from "@snake3d/shared";
+import { createBoardScene } from "./board.ts";
 
 const SERVER_URL = import.meta.env["VITE_SERVER_URL"] ?? "ws://localhost:3001";
 const HOST_NAME = "host-lobby";
@@ -19,6 +20,10 @@ const listEl = document.getElementById("player-list") as HTMLElement;
 const countEl = document.getElementById("player-count") as HTMLElement;
 const emptyEl = document.getElementById("player-empty") as HTMLElement;
 const statusEl = document.getElementById("status") as HTMLElement;
+const boardCanvas = document.getElementById("board-canvas") as HTMLCanvasElement;
+
+const board = createBoardScene(boardCanvas);
+board.start();
 
 let players: LobbyPlayer[] = [];
 
@@ -50,6 +55,10 @@ function handleMessage(message: ServerMessage): void {
   if (message.type === "player-joined" || message.type === "player-left") {
     players = reduceLobbyPlayers(players, message);
     renderPlayers();
+    return;
+  }
+  if (message.type === "game-state") {
+    board.update(message.payload.state);
   }
 }
 
