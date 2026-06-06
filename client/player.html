@@ -120,6 +120,37 @@
         margin-top: 4px;
       }
       .hidden { display: none; }
+
+      #joystick-view {
+        position: fixed;
+        right: calc(20px + env(safe-area-inset-right));
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        width: 140px;
+        height: 140px;
+        z-index: 10;
+        touch-action: none;
+      }
+      #joystick-view .joystick-base {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: rgba(19, 24, 38, 0.7);
+        border: 2px solid var(--border);
+        touch-action: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(2px);
+      }
+      #joystick-view .joystick-knob {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        will-change: transform;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
@@ -157,6 +188,8 @@
         <p class="tagline">Room <span id="waiting-room" class="badge"></span></p>
       </section>
     </main>
+
+    <div id="joystick-view" class="hidden"></div>
 
     <script type="module" src="/src/player.ts"></script>
   </body>

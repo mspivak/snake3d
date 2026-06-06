@@ -1,6 +1,6 @@
 export const PROTOCOL_VERSION = 1;
 
-export type ClientMessageType = "hello" | "create-room" | "join-room";
+export type ClientMessageType = "hello" | "create-room" | "join-room" | "direction-input";
 export type ServerMessageType =
   | "welcome"
   | "room-created"
@@ -46,6 +46,10 @@ export interface JoinedPayload {
   playerId: string;
 }
 
+export interface DirectionInputPayload {
+  direction: Direction;
+}
+
 export interface JoinErrorPayload {
   roomCode: string;
   code: JoinErrorCode;
@@ -71,6 +75,7 @@ export interface GameStatePayload {
 export type HelloMessage = MessageEnvelope<"hello", HelloPayload>;
 export type CreateRoomMessage = MessageEnvelope<"create-room", CreateRoomPayload>;
 export type JoinRoomMessage = MessageEnvelope<"join-room", JoinRoomPayload>;
+export type DirectionInputMessage = MessageEnvelope<"direction-input", DirectionInputPayload>;
 
 export type WelcomeMessage = MessageEnvelope<"welcome", WelcomePayload>;
 export type RoomCreatedMessage = MessageEnvelope<"room-created", RoomCreatedPayload>;
@@ -80,7 +85,11 @@ export type PlayerJoinedMessage = MessageEnvelope<"player-joined", PlayerJoinedP
 export type PlayerLeftMessage = MessageEnvelope<"player-left", PlayerLeftPayload>;
 export type GameStateMessage = MessageEnvelope<"game-state", GameStatePayload>;
 
-export type ClientMessage = HelloMessage | CreateRoomMessage | JoinRoomMessage;
+export type ClientMessage =
+  | HelloMessage
+  | CreateRoomMessage
+  | JoinRoomMessage
+  | DirectionInputMessage;
 export type ServerMessage =
   | WelcomeMessage
   | RoomCreatedMessage
@@ -127,6 +136,14 @@ export function createJoinRoom(roomCode: string, playerName: string): JoinRoomMe
     type: "join-room",
     protocolVersion: PROTOCOL_VERSION,
     payload: { roomCode, playerName }
+  };
+}
+
+export function createDirectionInput(direction: Direction): DirectionInputMessage {
+  return {
+    type: "direction-input",
+    protocolVersion: PROTOCOL_VERSION,
+    payload: { direction }
   };
 }
 

@@ -11,6 +11,8 @@ import {
   createJoinError,
   createPlayerJoined,
   createPlayerLeft,
+  createDirectionInput,
+  DIRECTIONS,
   parseMessage,
   serializeMessage,
   buildJoinUrl,
@@ -153,6 +155,19 @@ test("removeLobbyPlayer drops the matching player", () => {
   ];
   const next = removeLobbyPlayer(start, "p1");
   assert.deepEqual(next, [{ playerId: "p2", playerName: "bob" }]);
+});
+
+test("createDirectionInput round-trips via parseMessage", () => {
+  const msg = createDirectionInput(DIRECTIONS["+z"]);
+  assert.equal(msg.type, "direction-input");
+  assert.equal(msg.protocolVersion, PROTOCOL_VERSION);
+  assert.deepEqual(msg.payload.direction, { x: 0, y: 0, z: 1 });
+
+  const parsed = parseMessage<ClientMessage>(serializeMessage(msg));
+  assert.equal(parsed.type, "direction-input");
+  if (parsed.type === "direction-input") {
+    assert.deepEqual(parsed.payload.direction, DIRECTIONS["+z"]);
+  }
 });
 
 test("reduceLobbyPlayers applies join then leave events", () => {

@@ -169,6 +169,18 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
         }
         return;
       }
+
+      if (message.type === "direction-input") {
+        if (state === undefined || state.role !== "player") {
+          return;
+        }
+        const running = games.get(state.roomCode);
+        if (running === undefined) {
+          return;
+        }
+        running.game.inputs[state.playerId] = message.payload.direction;
+        return;
+      }
     });
 
     socket.on("close", () => {
