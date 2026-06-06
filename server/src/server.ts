@@ -15,7 +15,9 @@ import {
 } from "@snake3d/shared";
 import { RoomManager } from "./rooms.ts";
 import {
+  broadcastGameState,
   createRoomGame,
+  startRound,
   startGameLoop,
   type RoomGame,
   type RoomMember
@@ -53,7 +55,7 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
 
   interface RunningGame {
     game: RoomGame;
-    stop: () => void;
+    stop: (() => void) | undefined;
   }
 
   const games = new Map<string, RunningGame>();
@@ -79,19 +81,36 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
     if (existing !== undefined) {
       return existing;
     }
-    const game = createRoomGame(rooms.getPlayers(roomCode).map((player) => player.id));
-    const stop = startGameLoop(game);
-    const running: RunningGame = { game, stop };
+    const running: RunningGame = { game: createRoomGame(), stop: undefined };
     games.set(roomCode, running);
     return running;
   }
 
-  function stopGame(roomCode: string): void {
+  function stopLoop(running: RunningGame): void {
+    if (running.stop !== undefined) {
+      running.stop();
+      running.stop = undefined;
+    }
+  }
+
+  function startRoomRound(roomCode: string): void {
     const running = games.get(roomCode);
     if (running === undefined) {
       return;
     }
-    running.stop();
+    stopLoop(running);
+    const playerIds = rooms.getPlayers(roomCode).map((player) => player.id);
+    startRound(running.game, playerIds, Date.now() >>> 0);
+    broadcastGameState(running.game.state, running.game.members, running.game.phase);
+    running.stop = startGameLoop(running.game);
+  }
+
+  function destroyGame(roomCode: string): void {
+    const running = games.get(roomCode);
+    if (running === undefined) {
+      return;
+    }
+    stopLoop(running);
     games.delete(roomCode);
   }
 
@@ -101,10 +120,6 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
       return;
     }
     running.game.members = running.game.members.filter((existing) => existing !== member);
-    const hasPlayer = running.game.members.some((existing) => existing.role === "player");
-    if (!hasPlayer) {
-      stopGame(roomCode);
-    }
   }
 
   function notifyHost(roomCode: string, message: ServerMessage): void {
@@ -135,12 +150,10 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
         state = { role: "host", roomCode: room.code };
         hostSockets.set(room.code, socket);
         send(socket, createRoomCreated(room.code, room.hostId));
-        const running = games.get(room.code);
-        if (running !== undefined) {
-          member = makeMember(socket, "host");
-          running.game.members.push(member);
-          send(socket, createGameStateMessage(running.game.state));
-        }
+        const running = ensureGame(room.code);
+        member = makeMember(socket, "host");
+        running.game.members.push(member);
+        send(socket, createGameStateMessage(running.game.state, undefined, running.game.phase));
         return;
       }
 
@@ -158,15 +171,10 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
         const running = ensureGame(roomCode);
         member = makeMember(socket, "player", result.playerId);
         running.game.members.push(member);
-        send(socket, createGameStateMessage(running.game.state, result.playerId));
-
-        const hostSocket = hostSockets.get(roomCode);
-        const hasHostMember = running.game.members.some((existing) => existing.role === "host");
-        if (hostSocket !== undefined && !hasHostMember) {
-          const hostMember = makeMember(hostSocket, "host");
-          running.game.members.push(hostMember);
-          send(hostSocket, createGameStateMessage(running.game.state));
-        }
+        send(
+          socket,
+          createGameStateMessage(running.game.state, result.playerId, running.game.phase)
+        );
         return;
       }
 
@@ -181,6 +189,14 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
         running.game.inputs[state.playerId] = message.payload.direction;
         return;
       }
+
+      if (message.type === "start-game") {
+        if (state === undefined || state.role !== "host") {
+          return;
+        }
+        startRoomRound(state.roomCode);
+        return;
+      }
     });
 
     socket.on("close", () => {
@@ -192,7 +208,7 @@ export function createGameServer(options: GameServerOptions): Promise<GameServer
         if (member !== undefined) {
           removeMember(state.roomCode, member);
         }
-        stopGame(state.roomCode);
+        destroyGame(state.roomCode);
         rooms.removeHost(state.roomCode);
         return;
       }

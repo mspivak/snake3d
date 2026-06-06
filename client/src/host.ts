@@ -1,10 +1,12 @@
 import QRCode from "qrcode";
 import {
   createCreateRoom,
+  createStartGame,
   parseMessage,
   serializeMessage,
   buildJoinUrl,
   reduceLobbyPlayers,
+  type GamePhase,
   type ServerMessage,
   type LobbyPlayer
 } from "@snake3d/shared";
@@ -21,11 +23,38 @@ const countEl = document.getElementById("player-count") as HTMLElement;
 const emptyEl = document.getElementById("player-empty") as HTMLElement;
 const statusEl = document.getElementById("status") as HTMLElement;
 const boardCanvas = document.getElementById("board-canvas") as HTMLCanvasElement;
+const startButton = document.getElementById("start-button") as HTMLButtonElement;
+const restartButton = document.getElementById("restart-button") as HTMLButtonElement;
+const gameoverCard = document.getElementById("gameover-card") as HTMLElement;
+const gameoverDetail = document.getElementById("gameover-detail") as HTMLElement;
 
 const board = createBoardScene(boardCanvas);
 board.start();
 
 let players: LobbyPlayer[] = [];
+let phase: GamePhase = "lobby";
+let roomCode = "";
+let socket: WebSocket | undefined;
+
+function sendStart(): void {
+  if (socket !== undefined && socket.readyState === WebSocket.OPEN && roomCode !== "") {
+    socket.send(serializeMessage(createStartGame(roomCode)));
+  }
+}
+
+function renderLifecycle(): void {
+  const inLobby = phase === "lobby";
+  const isOver = phase === "over";
+  startButton.classList.toggle("hidden", !inLobby);
+  startButton.disabled = !inLobby || players.length === 0;
+  gameoverCard.classList.toggle("hidden", !isOver);
+
+  if (phase === "playing") {
+    statusEl.textContent = "Game in progress.";
+  } else if (isOver) {
+    statusEl.textContent = "Round over.";
+  }
+}
 
 function renderPlayers(): void {
   countEl.textContent = String(players.length);
@@ -48,36 +77,53 @@ function renderRoom(roomCode: string): void {
 
 function handleMessage(message: ServerMessage): void {
   if (message.type === "room-created") {
+    roomCode = message.payload.roomCode;
     renderRoom(message.payload.roomCode);
     statusEl.textContent = "Room open — share the code or QR to let players in.";
+    renderLifecycle();
     return;
   }
   if (message.type === "player-joined" || message.type === "player-left") {
     players = reduceLobbyPlayers(players, message);
     renderPlayers();
+    renderLifecycle();
     return;
   }
   if (message.type === "game-state") {
     board.update(message.payload.state);
+    phase = message.payload.phase;
+    if (phase === "over") {
+      const alive = message.payload.state.snakes.filter((s) => s.status === "alive");
+      gameoverDetail.textContent =
+        alive.length === 1
+          ? "One snake is left standing."
+          : "All snakes have fallen.";
+    }
+    renderLifecycle();
   }
 }
 
 function start(): void {
   renderPlayers();
-  const socket = new WebSocket(SERVER_URL);
+  renderLifecycle();
+  const ws = new WebSocket(SERVER_URL);
+  socket = ws;
 
-  socket.addEventListener("open", () => {
-    socket.send(serializeMessage(createCreateRoom(HOST_NAME)));
+  ws.addEventListener("open", () => {
+    ws.send(serializeMessage(createCreateRoom(HOST_NAME)));
     statusEl.textContent = "Connected — creating room…";
   });
 
-  socket.addEventListener("message", (event) => {
+  ws.addEventListener("message", (event) => {
     handleMessage(parseMessage<ServerMessage>(String(event.data)));
   });
 
-  socket.addEventListener("close", () => {
+  ws.addEventListener("close", () => {
     statusEl.textContent = "Disconnected from server.";
   });
 }
+
+startButton.addEventListener("click", sendStart);
+restartButton.addEventListener("click", sendStart);
 
 start();
