@@ -121,35 +121,58 @@
       }
       .hidden { display: none; }
 
-      #joystick-view {
+      #edge-control {
         position: fixed;
-        right: calc(20px + env(safe-area-inset-right));
-        bottom: calc(24px + env(safe-area-inset-bottom));
-        width: 140px;
-        height: 140px;
+        inset: 0;
         z-index: 10;
         touch-action: none;
+        background: transparent;
       }
-      #joystick-view .joystick-base {
+      .edge-hint {
         position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        background: rgba(19, 24, 38, 0.7);
-        border: 2px solid var(--border);
-        touch-action: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(2px);
-      }
-      #joystick-view .joystick-knob {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: var(--accent);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        will-change: transform;
+        font-size: 2.4rem;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.5);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         pointer-events: none;
+        user-select: none;
+        transition: transform 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+        will-change: transform, opacity;
+      }
+      .edge-hint-left {
+        left: calc(12px + env(safe-area-inset-left));
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .edge-hint-right {
+        right: calc(12px + env(safe-area-inset-right));
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .edge-hint-up {
+        top: calc(12px + env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .edge-hint-down {
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .edge-hint.flash {
+        color: rgba(74, 222, 128, 0.95);
+      }
+      .edge-hint-left.flash {
+        transform: translateY(-50%) scale(1.6);
+      }
+      .edge-hint-right.flash {
+        transform: translateY(-50%) scale(1.6);
+      }
+      .edge-hint-up.flash {
+        transform: translateX(-50%) scale(1.6);
+      }
+      .edge-hint-down.flash {
+        transform: translateX(-50%) scale(1.6);
       }
       #pov-view {
         position: fixed;
@@ -221,7 +244,7 @@
     </main>
 
     <div id="pov-view" class="hidden"></div>
-    <div id="joystick-view" class="hidden"></div>
+    <div id="edge-control" class="hidden"></div>
     <div id="status-banner" class="hidden" role="status"></div>
 
     <script type="module" src="/src/player.ts"></script>
