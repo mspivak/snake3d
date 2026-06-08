@@ -12,7 +12,7 @@ import {
   type JoinAction,
   type ServerMessage
 } from "@snake3d/shared";
-import { mountJoystick, type JoystickHandle } from "./joystick.ts";
+import { mountEdgeControl, type EdgeControlHandle } from "./edgecontrol.ts";
 import { createPovRenderer, type PovRenderer } from "./pov.ts";
 
 const SERVER_URL = import.meta.env["VITE_SERVER_URL"] ?? "ws://localhost:3001";
@@ -25,13 +25,13 @@ const nameInput = document.querySelector<HTMLInputElement>("#player-name")!;
 const joinButton = document.querySelector<HTMLButtonElement>("#join-button")!;
 const errorEl = document.querySelector<HTMLElement>("#join-error")!;
 const waitingRoom = document.querySelector<HTMLElement>("#waiting-room")!;
-const joystickView = document.querySelector<HTMLElement>("#joystick-view")!;
+const edgeControlView = document.querySelector<HTMLElement>("#edge-control")!;
 const povView = document.querySelector<HTMLElement>("#pov-view")!;
 const statusBanner = document.querySelector<HTMLElement>("#status-banner")!;
 
 let state: JoinState = initialJoinState;
 let socket: WebSocket | undefined;
-let joystick: JoystickHandle | undefined;
+let control: EdgeControlHandle | undefined;
 let povReady: Promise<PovRenderer> | undefined;
 
 function startPov(): void {
@@ -72,11 +72,15 @@ function applyLifeStatus(
   if (shouldDisable !== dead) {
     dead = shouldDisable;
     if (dead) {
-      joystick?.destroy();
-      joystick = undefined;
+      control?.destroy();
+      control = undefined;
     } else if (state.status === "waiting" && socket !== undefined) {
-      joystick = mountJoystick(joystickView, socket);
+      control = mountEdgeControl(edgeControlView, socket);
     }
+  }
+
+  if (!dead && snake !== undefined && snake.status === "alive") {
+    control?.sync(snake.direction);
   }
 }
 
@@ -100,12 +104,12 @@ function render(): void {
     startPov();
   }
 
-  joystickView.classList.toggle("hidden", !waiting || dead);
-  if (waiting && !dead && joystick === undefined && socket !== undefined) {
-    joystick = mountJoystick(joystickView, socket);
-  } else if ((!waiting || dead) && joystick !== undefined) {
-    joystick.destroy();
-    joystick = undefined;
+  edgeControlView.classList.toggle("hidden", !waiting || dead);
+  if (waiting && !dead && control === undefined && socket !== undefined) {
+    control = mountEdgeControl(edgeControlView, socket);
+  } else if ((!waiting || dead) && control !== undefined) {
+    control.destroy();
+    control = undefined;
   }
 }
 

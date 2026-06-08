@@ -148,7 +148,7 @@ export async function createPovRenderer(
     dynamicGroup.add(mesh);
   }
 
-  function applyHeadCamera(snake: Snake): void {
+  function headCameraTarget(snake: Snake): { pos: Vec3; look: Vec3 } {
     const head = snake.cells[0] ?? { x: 0, y: 0, z: 0 };
     const { cameraPosition, lookAtTarget } = computeHeadCamera(
       head,
@@ -156,15 +156,67 @@ export async function createPovRenderer(
       6,
       3
     );
-    camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-    camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
+    return { pos: cameraPosition, look: lookAtTarget };
   }
 
-  function applyOverviewCamera(size: number): void {
+  function overviewCameraTarget(size: number): { pos: Vec3; look: Vec3 } {
     const center = size / 2 - 0.5;
-    camera.position.set(center + size, center + size, center + size);
-    camera.lookAt(center, center, center);
+    return {
+      pos: { x: center + size, y: center + size, z: center + size },
+      look: { x: center, y: center, z: center }
+    };
   }
+
+  let currentPos: Vec3 = { x: 0, y: 0, z: 0 };
+  let currentLook: Vec3 = { x: 0, y: 0, z: 0 };
+  let targetPos: Vec3 = { x: 0, y: 0, z: 0 };
+  let targetLook: Vec3 = { x: 0, y: 0, z: 0 };
+  let hasTarget = false;
+  let frameHandle = 0;
+
+  const LERP = 0.12;
+  const SNAP_EPSILON = 0.001;
+
+  function lerp(from: Vec3, to: Vec3): Vec3 {
+    const next = {
+      x: from.x + (to.x - from.x) * LERP,
+      y: from.y + (to.y - from.y) * LERP,
+      z: from.z + (to.z - from.z) * LERP
+    };
+    if (
+      Math.abs(to.x - next.x) < SNAP_EPSILON &&
+      Math.abs(to.y - next.y) < SNAP_EPSILON &&
+      Math.abs(to.z - next.z) < SNAP_EPSILON
+    ) {
+      return { x: to.x, y: to.y, z: to.z };
+    }
+    return next;
+  }
+
+  function renderFrame(): void {
+    if (hasTarget) {
+      currentPos = lerp(currentPos, targetPos);
+      currentLook = lerp(currentLook, targetLook);
+
+      camera.position.set(currentPos.x, currentPos.y, currentPos.z);
+
+      const dx = currentLook.x - currentPos.x;
+      const dy = currentLook.y - currentPos.y;
+      const dz = currentLook.z - currentPos.z;
+      const length = Math.hypot(dx, dy, dz) || 1;
+      if (Math.abs(dy / length) > 0.9) {
+        camera.up.set(0, 0, 1);
+      } else {
+        camera.up.set(0, 1, 0);
+      }
+      camera.lookAt(currentLook.x, currentLook.y, currentLook.z);
+
+      renderer.render(scene, camera);
+    }
+    frameHandle = requestAnimationFrame(renderFrame);
+  }
+
+  frameHandle = requestAnimationFrame(renderFrame);
 
   function update(state: GameState, youPlayerId: string | undefined): void {
     const size = state.bounds.size;
@@ -185,16 +237,21 @@ export async function createPovRenderer(
       addFood(cell);
     }
 
-    if (ownSnake) {
-      applyHeadCamera(ownSnake);
-    } else {
-      applyOverviewCamera(size);
-    }
+    const next = ownSnake
+      ? headCameraTarget(ownSnake)
+      : overviewCameraTarget(size);
+    targetPos = next.pos;
+    targetLook = next.look;
 
-    renderer.render(scene, camera);
+    if (!hasTarget) {
+      currentPos = { x: targetPos.x, y: targetPos.y, z: targetPos.z };
+      currentLook = { x: targetLook.x, y: targetLook.y, z: targetLook.z };
+      hasTarget = true;
+    }
   }
 
   function dispose(): void {
+    cancelAnimationFrame(frameHandle);
     resizeObserver.disconnect();
     clearDynamic();
     boundsGroup.clear();
