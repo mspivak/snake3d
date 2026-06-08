@@ -148,17 +148,6 @@ export async function createPovRenderer(
     dynamicGroup.add(mesh);
   }
 
-  function headCameraTarget(snake: Snake): { pos: Vec3; look: Vec3 } {
-    const head = snake.cells[0] ?? { x: 0, y: 0, z: 0 };
-    const { cameraPosition, lookAtTarget } = computeHeadCamera(
-      head,
-      snake.direction,
-      6,
-      3
-    );
-    return { pos: cameraPosition, look: lookAtTarget };
-  }
-
   function overviewCameraTarget(size: number): { pos: Vec3; look: Vec3 } {
     const center = size / 2 - 0.5;
     return {
@@ -167,50 +156,58 @@ export async function createPovRenderer(
     };
   }
 
-  let currentPos: Vec3 = { x: 0, y: 0, z: 0 };
-  let currentLook: Vec3 = { x: 0, y: 0, z: 0 };
-  let targetPos: Vec3 = { x: 0, y: 0, z: 0 };
-  let targetLook: Vec3 = { x: 0, y: 0, z: 0 };
-  let hasTarget = false;
+  const BACK = 5.5;
+  const HEIGHT = 2.4;
+  const K_POS = 0.25;
+  const K_ROT = 0.16;
+
+  let smoothHead: Vec3 = { x: 0, y: 0, z: 0 };
+  let smoothFwd: Vec3 = { x: 1, y: 0, z: 0 };
+  let targetHead: Vec3 = { x: 0, y: 0, z: 0 };
+  let targetFwd: Vec3 = { x: 1, y: 0, z: 0 };
+  let overviewPos: Vec3 = { x: 0, y: 0, z: 0 };
+  let overviewLook: Vec3 = { x: 0, y: 0, z: 0 };
+  let mode: "head" | "overview" = "overview";
+  let hasState = false;
   let frameHandle = 0;
 
-  const LERP = 0.12;
-  const SNAP_EPSILON = 0.001;
-
-  function lerp(from: Vec3, to: Vec3): Vec3 {
-    const next = {
-      x: from.x + (to.x - from.x) * LERP,
-      y: from.y + (to.y - from.y) * LERP,
-      z: from.z + (to.z - from.z) * LERP
+  function lerpVec(from: Vec3, to: Vec3, k: number): Vec3 {
+    return {
+      x: from.x + (to.x - from.x) * k,
+      y: from.y + (to.y - from.y) * k,
+      z: from.z + (to.z - from.z) * k
     };
-    if (
-      Math.abs(to.x - next.x) < SNAP_EPSILON &&
-      Math.abs(to.y - next.y) < SNAP_EPSILON &&
-      Math.abs(to.z - next.z) < SNAP_EPSILON
-    ) {
-      return { x: to.x, y: to.y, z: to.z };
-    }
-    return next;
+  }
+
+  function normalize(v: Vec3): Vec3 {
+    const len = Math.hypot(v.x, v.y, v.z) || 1;
+    return { x: v.x / len, y: v.y / len, z: v.z / len };
+  }
+
+  function upAxisFor(fwd: Vec3): Vec3 {
+    return Math.abs(fwd.y) > 0.85 ? { x: 0, y: 0, z: 1 } : { x: 0, y: 1, z: 0 };
   }
 
   function renderFrame(): void {
-    if (hasTarget) {
-      currentPos = lerp(currentPos, targetPos);
-      currentLook = lerp(currentLook, targetLook);
-
-      camera.position.set(currentPos.x, currentPos.y, currentPos.z);
-
-      const dx = currentLook.x - currentPos.x;
-      const dy = currentLook.y - currentPos.y;
-      const dz = currentLook.z - currentPos.z;
-      const length = Math.hypot(dx, dy, dz) || 1;
-      if (Math.abs(dy / length) > 0.9) {
-        camera.up.set(0, 0, 1);
+    if (hasState) {
+      if (mode === "head") {
+        smoothHead = lerpVec(smoothHead, targetHead, K_POS);
+        smoothFwd = normalize(lerpVec(smoothFwd, targetFwd, K_ROT));
+        const up = upAxisFor(smoothFwd);
+        camera.position.set(
+          smoothHead.x - smoothFwd.x * BACK + up.x * HEIGHT,
+          smoothHead.y - smoothFwd.y * BACK + up.y * HEIGHT,
+          smoothHead.z - smoothFwd.z * BACK + up.z * HEIGHT
+        );
+        camera.up.set(up.x, up.y, up.z);
+        camera.lookAt(smoothHead.x, smoothHead.y, smoothHead.z);
       } else {
+        smoothHead = lerpVec(smoothHead, overviewPos, K_POS);
+        smoothFwd = lerpVec(smoothFwd, overviewLook, K_POS);
+        camera.position.set(smoothHead.x, smoothHead.y, smoothHead.z);
         camera.up.set(0, 1, 0);
+        camera.lookAt(smoothFwd.x, smoothFwd.y, smoothFwd.z);
       }
-      camera.lookAt(currentLook.x, currentLook.y, currentLook.z);
-
       renderer.render(scene, camera);
     }
     frameHandle = requestAnimationFrame(renderFrame);
@@ -237,17 +234,26 @@ export async function createPovRenderer(
       addFood(cell);
     }
 
-    const next = ownSnake
-      ? headCameraTarget(ownSnake)
-      : overviewCameraTarget(size);
-    targetPos = next.pos;
-    targetLook = next.look;
-
-    if (!hasTarget) {
-      currentPos = { x: targetPos.x, y: targetPos.y, z: targetPos.z };
-      currentLook = { x: targetLook.x, y: targetLook.y, z: targetLook.z };
-      hasTarget = true;
+    const prevMode = mode;
+    if (ownSnake) {
+      mode = "head";
+      targetHead = ownSnake.cells[0] ?? { x: 0, y: 0, z: 0 };
+      targetFwd = normalize(ownSnake.direction);
+      if (!hasState || prevMode !== "head") {
+        smoothHead = { x: targetHead.x, y: targetHead.y, z: targetHead.z };
+        smoothFwd = { x: targetFwd.x, y: targetFwd.y, z: targetFwd.z };
+      }
+    } else {
+      mode = "overview";
+      const ov = overviewCameraTarget(size);
+      overviewPos = ov.pos;
+      overviewLook = ov.look;
+      if (!hasState || prevMode !== "overview") {
+        smoothHead = { x: overviewPos.x, y: overviewPos.y, z: overviewPos.z };
+        smoothFwd = { x: overviewLook.x, y: overviewLook.y, z: overviewLook.z };
+      }
     }
+    hasState = true;
   }
 
   function dispose(): void {
