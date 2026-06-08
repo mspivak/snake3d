@@ -36,17 +36,17 @@ test("equalVec is exact integer equality", () => {
   assert.equal(equalVec(px, py), false);
 });
 
-test("applyTurn right from +x/+y faces +z keeping up +y", () => {
+test("applyTurn right from +x/+y faces -z keeping up +y", () => {
   const frame: Frame = { forward: px, up: py };
-  assert.deepEqual(applyTurn(frame, "right"), { forward: pz, up: py });
-});
-
-test("applyTurn left from +x/+y faces -z keeping up +y", () => {
-  const frame: Frame = { forward: px, up: py };
-  assert.deepEqual(applyTurn(frame, "left"), {
+  assert.deepEqual(applyTurn(frame, "right"), {
     forward: { x: 0, y: 0, z: -1 },
     up: py
   });
+});
+
+test("applyTurn left from +x/+y faces +z keeping up +y", () => {
+  const frame: Frame = { forward: px, up: py };
+  assert.deepEqual(applyTurn(frame, "left"), { forward: pz, up: py });
 });
 
 test("applyTurn up from +x/+y faces +y with up -x", () => {
@@ -180,7 +180,7 @@ test("a single edge tap sends one perpendicular direction", () => {
 
   assert.equal(socket.sent.length, 1);
   const dir = directionOf(socket.sent[0].payload);
-  assert.deepEqual(dir, { x: 0, y: 0, z: 1 });
+  assert.deepEqual(dir, { x: 0, y: 0, z: -1 });
 
   handle.destroy();
 });
