@@ -64,7 +64,7 @@ export async function createPovRenderer(
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0b0e14);
 
-  const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+  const camera = new THREE.PerspectiveCamera(90, 1, 0.1, 1000);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -153,8 +153,8 @@ export async function createPovRenderer(
     const { cameraPosition, lookAtTarget } = computeHeadCamera(
       head,
       snake.direction,
-      3,
-      1.4
+      6,
+      3
     );
     camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
     camera.lookAt(lookAtTarget.x, lookAtTarget.y, lookAtTarget.z);
