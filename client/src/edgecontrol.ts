@@ -35,9 +35,9 @@ export function applyTurn(frame: Frame, action: TurnAction): Frame {
   const right = cross(frame.forward, frame.up);
   switch (action) {
     case "right":
-      return { forward: right, up: frame.up };
-    case "left":
       return { forward: neg(right), up: frame.up };
+    case "left":
+      return { forward: right, up: frame.up };
     case "up":
       return { forward: frame.up, up: neg(frame.forward) };
     case "down":
